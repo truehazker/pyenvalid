@@ -68,4 +68,3 @@ def clean_env(monkeypatch: pytest.MonkeyPatch) -> pytest.MonkeyPatch:
     for var in env_vars:
         monkeypatch.delenv(var, raising=False)
     return monkeypatch
-
