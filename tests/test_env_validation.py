@@ -410,8 +410,9 @@ class TestBooleanEdgeCases:
 class TestErrorMessageQuality:
     """Tests for error message quality and content."""
 
+    @pytest.mark.usefixtures("clean_env")
     def test_missing_required_shows_helpful_message(
-        self, clean_env: pytest.MonkeyPatch
+        self
     ) -> None:
         """Error message should be helpful for missing required fields."""
 
@@ -541,8 +542,9 @@ class TestRealWorldScenarios:
         assert settings.feature_beta_api is True
         assert settings.feature_analytics is True
 
+    @pytest.mark.usefixtures("clean_env")
     def test_missing_critical_database_config(
-        self, clean_env: pytest.MonkeyPatch
+        self
     ) -> None:
         """Should fail gracefully when critical config is missing."""
 
