@@ -13,9 +13,7 @@ class TestValidateSettingsEdgeCases:
     """Tests for edge cases in validate_settings function."""
 
     @pytest.mark.usefixtures("clean_env")
-    def test_settings_with_nested_error_location(
-        self
-    ) -> None:
+    def test_settings_with_nested_error_location(self) -> None:
         """Should handle nested field error locations."""
 
         class NestedSettings(BaseSettings):
@@ -29,9 +27,7 @@ class TestValidateSettingsEdgeCases:
         assert "simple_field" in error.missing_fields
 
     @pytest.mark.usefixtures("clean_env")
-    def test_settings_with_empty_error_location(
-        self
-    ) -> None:
+    def test_settings_with_empty_error_location(self) -> None:
         """Should handle errors with empty location tuple gracefully."""
         # This is a rare edge case but should be handled
 
@@ -283,9 +279,7 @@ class TestValidateSettingsEdgeCases:
         assert settings.rate == 0.0
 
     @pytest.mark.usefixtures("clean_env")
-    def test_settings_with_empty_string_default(
-        self
-    ) -> None:
+    def test_settings_with_empty_string_default(self) -> None:
         """Should handle empty string defaults."""
 
         class EmptyStringSettings(BaseSettings):
@@ -393,9 +387,7 @@ class TestValidateSettingsErrorMessages:
         assert len(error.errors) == 2
 
     @pytest.mark.usefixtures("clean_env")
-    def test_error_preserves_all_validation_errors(
-        self
-    ) -> None:
+    def test_error_preserves_all_validation_errors(self) -> None:
         """Should preserve all validation errors from pydantic."""
 
         class MultiErrorSettings(BaseSettings):

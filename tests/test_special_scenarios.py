@@ -33,6 +33,7 @@ class TestEmptyAndNoneValues:
     @pytest.mark.usefixtures("clean_env")
     def test_optional_field_can_be_none(self) -> None:
         """Should allow None for optional fields."""
+
         class OptionalSettings(BaseSettings):
             model_config = SettingsConfigDict(env_file=None)
             optional_value: str | None = None
@@ -82,9 +83,7 @@ class TestValidationErrorTranslation:
     """Tests for how ValidationError is translated to ConfigurationError."""
 
     @pytest.mark.usefixtures("clean_env")
-    def test_validation_error_field_extraction(
-        self
-    ) -> None:
+    def test_validation_error_field_extraction(self) -> None:
         """Should correctly extract field names from ValidationError."""
 
         class FieldExtractionSettings(BaseSettings):
@@ -167,9 +166,7 @@ class TestSettingsInheritance:
         assert settings.api_key == "secret"
 
     @pytest.mark.usefixtures("clean_env")
-    def test_inherited_settings_missing_required(
-        self
-    ) -> None:
+    def test_inherited_settings_missing_required(self) -> None:
         """Should report missing fields from inherited settings."""
 
         class BaseAppSettings(BaseSettings):

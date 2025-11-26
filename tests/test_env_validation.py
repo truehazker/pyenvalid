@@ -411,9 +411,7 @@ class TestErrorMessageQuality:
     """Tests for error message quality and content."""
 
     @pytest.mark.usefixtures("clean_env")
-    def test_missing_required_shows_helpful_message(
-        self
-    ) -> None:
+    def test_missing_required_shows_helpful_message(self) -> None:
         """Error message should be helpful for missing required fields."""
 
         class HelpfulSettings(BaseSettings):
@@ -543,9 +541,7 @@ class TestRealWorldScenarios:
         assert settings.feature_analytics is True
 
     @pytest.mark.usefixtures("clean_env")
-    def test_missing_critical_database_config(
-        self
-    ) -> None:
+    def test_missing_critical_database_config(self) -> None:
         """Should fail gracefully when critical config is missing."""
 
         class CriticalDbSettings(BaseSettings):
