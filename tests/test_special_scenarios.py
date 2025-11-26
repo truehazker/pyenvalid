@@ -9,26 +9,18 @@ from pyenvalid import ConfigurationError, validate_settings
 class TestEmptyAndNoneValues:
     """Tests for empty and None value handling."""
 
-    def test_required_field_with_empty_string_fails(
+    def test_required_field_accepts_empty_string(
         self, clean_env: pytest.MonkeyPatch
     ) -> None:
-        """Should fail when required field is empty string."""
+        """Should accept empty string for required str field (Pydantic behavior)."""
 
         class RequiredSettings(BaseSettings):
             model_config = SettingsConfigDict(env_file=None)
             api_key: str
 
         clean_env.setenv("API_KEY", "")
-
-        # Pydantic might allow empty string for str type
-        # Let's test the actual behavior
-        try:
-            settings = validate_settings(RequiredSettings)
-            # If it succeeds, empty string is valid for str type
-            assert settings.api_key == ""
-        except ConfigurationError:
-            # If it fails, that's also acceptable behavior
-            pass
+        settings = validate_settings(RequiredSettings)
+        assert settings.api_key == ""
 
     @pytest.mark.usefixtures("clean_env")
     def test_optional_field_can_be_none(self) -> None:
