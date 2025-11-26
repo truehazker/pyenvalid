@@ -141,7 +141,7 @@ class TestConfigurationErrorEdgeCases:
         """Should handle field names with whitespace characters."""
         error = ConfigurationError([("field with spaces", "missing")])
         message = str(error)
-        
+
         # Should uppercase and include the field
         assert "FIELD WITH SPACES" in message
 
@@ -149,21 +149,21 @@ class TestConfigurationErrorEdgeCases:
         """Should handle field names with hyphens."""
         error = ConfigurationError([("api-key", "missing")])
         message = str(error)
-        
+
         assert "API-KEY" in message
 
     def test_error_with_numeric_field_name(self) -> None:
         """Should handle field names that are numeric."""
         error = ConfigurationError([("123field", "missing")])
         message = str(error)
-        
+
         assert "123FIELD" in message
 
     def test_error_with_all_caps_field_name(self) -> None:
         """Should handle field names already in uppercase."""
         error = ConfigurationError([("API_KEY", "missing")])
         message = str(error)
-        
+
         assert "API_KEY" in message
 
     def test_error_types_variety(self) -> None:
@@ -179,19 +179,19 @@ class TestConfigurationErrorEdgeCases:
         ]
         error = ConfigurationError(errors)
         message = str(error)
-        
+
         # All error types should appear
-        for field, error_type in errors:
+        for _, error_type in errors:
             assert error_type in message
 
     def test_errors_immutability(self) -> None:
         """Should store errors as a list (not a reference to input)."""
         original_errors = [("field1", "missing")]
         error = ConfigurationError(original_errors)
-        
+
         # Modify original
         original_errors.append(("field2", "missing"))
-        
+
         # Error object should not be affected
         assert len(error.errors) == 1
         assert error.errors[0] == ("field1", "missing")
@@ -200,7 +200,7 @@ class TestConfigurationErrorEdgeCases:
         """Should handle empty title string."""
         error = ConfigurationError([("api_key", "missing")], title="")
         message = str(error)
-        
+
         # Should not crash and should still format
         assert "┌" in message
         assert "API_KEY" in message
@@ -209,7 +209,7 @@ class TestConfigurationErrorEdgeCases:
         """Should handle empty hint string."""
         error = ConfigurationError([("api_key", "missing")], hint="")
         message = str(error)
-        
+
         # Should not crash and should still format
         assert "┌" in message
         assert "API_KEY" in message
@@ -217,11 +217,10 @@ class TestConfigurationErrorEdgeCases:
     def test_newlines_in_title(self) -> None:
         """Should handle newlines in title."""
         error = ConfigurationError(
-            [("api_key", "missing")],
-            title="CONFIGURATION\nERROR"
+            [("api_key", "missing")], title="CONFIGURATION\nERROR"
         )
         message = str(error)
-        
+
         # Should contain the title (possibly modified)
         assert "CONFIGURATION" in message or "ERROR" in message
 
@@ -229,10 +228,10 @@ class TestConfigurationErrorEdgeCases:
         """Should handle newlines in hint."""
         error = ConfigurationError(
             [("api_key", "missing")],
-            hint="Check your .env file\nOr set environment variables"
+            hint="Check your .env file\nOr set environment variables",
         )
         message = str(error)
-        
+
         # Should contain the hint (possibly modified)
         assert "Check your" in message or ".env" in message
 
@@ -240,10 +239,10 @@ class TestConfigurationErrorEdgeCases:
         """Should handle a large number of errors."""
         errors = [(f"field_{i}", "missing") for i in range(100)]
         error = ConfigurationError(errors)
-        
+
         assert len(error.errors) == 100
         assert len(error.missing_fields) == 100
-        
+
         message = str(error)
         # Should still format without crashing
         assert "┌" in message
@@ -252,7 +251,7 @@ class TestConfigurationErrorEdgeCases:
         """Should mention environment variables in message."""
         error = ConfigurationError([("api_key", "missing")])
         message = str(error)
-        
+
         assert "environment" in message.lower()
 
     def test_error_message_line_structure(self) -> None:
@@ -260,7 +259,7 @@ class TestConfigurationErrorEdgeCases:
         error = ConfigurationError([("api_key", "missing")])
         message = str(error)
         lines = message.split("\n")
-        
+
         # Should have multiple lines
         assert len(lines) > 5
         # First and last should be empty (formatting)
@@ -277,18 +276,18 @@ class TestConfigurationErrorEdgeCases:
         ]
         error = ConfigurationError(errors)
         message = str(error)
-        
+
         # Count markers
         missing_count = message.count("✗")
         invalid_count = message.count("!")
-        
+
         assert missing_count == 2  # Two "missing" errors
         assert invalid_count == 2  # Two non-"missing" errors
 
     def test_repr_contains_error_count(self) -> None:
         """Should have a useful repr."""
         error = ConfigurationError([("field1", "missing"), ("field2", "invalid")])
-        
+
         # repr should exist and be informative
         repr_str = repr(error)
         assert "ConfigurationError" in repr_str or "Exception" in repr_str
@@ -299,29 +298,23 @@ class TestConfigurationErrorTitle:
 
     def test_title_with_special_chars(self) -> None:
         """Should handle special characters in title."""
-        error = ConfigurationError(
-            [("api_key", "missing")],
-            title="*** ERROR ***"
-        )
+        error = ConfigurationError([("api_key", "missing")], title="*** ERROR ***")
         message = str(error)
-        
+
         assert "***" in message
 
     def test_title_very_short(self) -> None:
         """Should handle very short titles."""
         error = ConfigurationError([("api_key", "missing")], title="X")
         message = str(error)
-        
+
         assert "X" in message
 
     def test_title_with_digits(self) -> None:
         """Should handle titles with numbers."""
-        error = ConfigurationError(
-            [("api_key", "missing")],
-            title="ERROR 500"
-        )
+        error = ConfigurationError([("api_key", "missing")], title="ERROR 500")
         message = str(error)
-        
+
         assert "500" in message
 
 
@@ -331,21 +324,19 @@ class TestConfigurationErrorHint:
     def test_hint_with_urls(self) -> None:
         """Should handle URLs in hints."""
         error = ConfigurationError(
-            [("api_key", "missing")],
-            hint="See https://docs.example.com for details"
+            [("api_key", "missing")], hint="See https://docs.example.com for details"
         )
         message = str(error)
-        
+
         assert "https://" in message or "docs.example.com" in message
 
     def test_hint_with_commands(self) -> None:
         """Should handle command examples in hints."""
         error = ConfigurationError(
-            [("api_key", "missing")],
-            hint="Run: export API_KEY=your_key"
+            [("api_key", "missing")], hint="Run: export API_KEY=your_key"
         )
         message = str(error)
-        
+
         assert "export" in message or "API_KEY" in message
 
     def test_hint_multiline_content(self) -> None:
@@ -353,6 +344,6 @@ class TestConfigurationErrorHint:
         hint = "Step 1: Create .env file\nStep 2: Add variables\nStep 3: Restart"
         error = ConfigurationError([("api_key", "missing")], hint=hint)
         message = str(error)
-        
+
         # Should contain some hint content
         assert "Step" in message or ".env" in message

@@ -220,19 +220,19 @@ class TestComplexSettings:
         self, clean_env: pytest.MonkeyPatch
     ) -> None:
         """Should handle multiple Literal fields."""
-        
+
         class MultiLiteralSettings(BaseSettings):
             model_config = SettingsConfigDict(env_file=None, case_sensitive=False)
             env: Literal["dev", "staging", "prod"] = "dev"
             log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
             mode: Literal["read", "write", "read-write"] = "read"
-        
+
         clean_env.setenv("ENV", "prod")
         clean_env.setenv("LOG_LEVEL", "ERROR")
         clean_env.setenv("MODE", "read-write")
-        
+
         settings = validate_settings(MultiLiteralSettings)
-        
+
         assert settings.env == "prod"
         assert settings.log_level == "ERROR"
         assert settings.mode == "read-write"
@@ -241,7 +241,7 @@ class TestComplexSettings:
         self, clean_env: pytest.MonkeyPatch
     ) -> None:
         """Should handle mix of required and optional fields."""
-        
+
         class MixedSettings(BaseSettings):
             model_config = SettingsConfigDict(env_file=None)
             required1: str
@@ -250,13 +250,13 @@ class TestComplexSettings:
             optional2: int = 42
             required3: bool
             optional3: bool = False
-        
+
         clean_env.setenv("REQUIRED1", "value1")
         clean_env.setenv("REQUIRED2", "100")
         clean_env.setenv("REQUIRED3", "true")
-        
+
         settings = validate_settings(MixedSettings)
-        
+
         assert settings.required1 == "value1"
         assert settings.optional1 == "default1"
         assert settings.required2 == 100
@@ -264,21 +264,19 @@ class TestComplexSettings:
         assert settings.required3 is True
         assert settings.optional3 is False
 
-    def test_override_some_defaults(
-        self, clean_env: pytest.MonkeyPatch
-    ) -> None:
+    def test_override_some_defaults(self, clean_env: pytest.MonkeyPatch) -> None:
         """Should allow overriding some but not all defaults."""
-        
+
         class PartialOverrideSettings(BaseSettings):
             model_config = SettingsConfigDict(env_file=None)
             field1: str = "default1"
             field2: str = "default2"
             field3: str = "default3"
-        
+
         clean_env.setenv("FIELD2", "custom2")
-        
+
         settings = validate_settings(PartialOverrideSettings)
-        
+
         assert settings.field1 == "default1"
         assert settings.field2 == "custom2"
         assert settings.field3 == "default3"
@@ -287,97 +285,89 @@ class TestComplexSettings:
         self, clean_env: pytest.MonkeyPatch
     ) -> None:
         """Should allow empty string to override non-empty default."""
-        
+
         class EmptyOverrideSettings(BaseSettings):
             model_config = SettingsConfigDict(env_file=None)
             value: str = "default"
-        
+
         clean_env.setenv("VALUE", "")
-        
+
         settings = validate_settings(EmptyOverrideSettings)
-        
+
         assert settings.value == ""
 
-    def test_whitespace_string_values(
-        self, clean_env: pytest.MonkeyPatch
-    ) -> None:
+    def test_whitespace_string_values(self, clean_env: pytest.MonkeyPatch) -> None:
         """Should preserve whitespace in string values."""
-        
+
         class WhitespaceSettings(BaseSettings):
             model_config = SettingsConfigDict(env_file=None)
             value: str
-        
+
         clean_env.setenv("VALUE", "  spaces  ")
-        
+
         settings = validate_settings(WhitespaceSettings)
-        
+
         assert settings.value == "  spaces  "
 
 
 class TestNumericEdgeCases:
     """Tests for numeric type edge cases."""
 
-    def test_large_integer_values(
-        self, clean_env: pytest.MonkeyPatch
-    ) -> None:
+    def test_large_integer_values(self, clean_env: pytest.MonkeyPatch) -> None:
         """Should handle very large integer values."""
-        
+
         class LargeIntSettings(BaseSettings):
             model_config = SettingsConfigDict(env_file=None)
             big_number: int
-        
+
         clean_env.setenv("BIG_NUMBER", "9999999999999999999")
-        
+
         settings = validate_settings(LargeIntSettings)
-        
+
         assert settings.big_number == 9999999999999999999
 
-    def test_negative_float_values(
-        self, clean_env: pytest.MonkeyPatch
-    ) -> None:
+    def test_negative_float_values(self, clean_env: pytest.MonkeyPatch) -> None:
         """Should handle negative float values."""
-        
+
         class NegativeFloatSettings(BaseSettings):
             model_config = SettingsConfigDict(env_file=None)
             value: float
-        
+
         clean_env.setenv("VALUE", "-3.14159")
-        
+
         settings = validate_settings(NegativeFloatSettings)
-        
+
         assert settings.value == -3.14159
 
     def test_integer_overflow_becomes_error(
         self, clean_env: pytest.MonkeyPatch
     ) -> None:
         """Should handle integer-like strings that aren't valid."""
-        
+
         class IntSettings(BaseSettings):
             model_config = SettingsConfigDict(env_file=None)
             value: int
-        
+
         clean_env.setenv("VALUE", "12.34")
-        
+
         with pytest.raises(ConfigurationError) as exc_info:
             validate_settings(IntSettings)
-        
+
         error = exc_info.value
         assert "value" in error.missing_fields
 
-    def test_special_float_values(
-        self, clean_env: pytest.MonkeyPatch
-    ) -> None:
+    def test_special_float_values(self, clean_env: pytest.MonkeyPatch) -> None:
         """Should handle special float string formats."""
-        
+
         class SpecialFloatSettings(BaseSettings):
             model_config = SettingsConfigDict(env_file=None)
             value: float
-        
+
         # Test with leading zero
         clean_env.setenv("VALUE", "0.5")
         settings = validate_settings(SpecialFloatSettings)
         assert settings.value == 0.5
-        
+
         # Test without leading zero
         clean_env.setenv("VALUE", ".5")
         settings = validate_settings(SpecialFloatSettings)
@@ -391,34 +381,29 @@ class TestBooleanEdgeCases:
         model_config = SettingsConfigDict(env_file=None)
         flag: bool
 
-    def test_boolean_with_whitespace(
-        self, clean_env: pytest.MonkeyPatch
-    ) -> None:
-        """Should handle boolean values with surrounding whitespace."""
+    def test_boolean_with_whitespace_fails(self, clean_env: pytest.MonkeyPatch) -> None:
+        """Pydantic doesn't strip whitespace from boolean values."""
         clean_env.setenv("FLAG", " true ")
-        
-        settings = validate_settings(self.StrictBoolSettings)
-        
-        assert settings.flag is True
 
-    def test_numeric_one_as_true(
-        self, clean_env: pytest.MonkeyPatch
-    ) -> None:
+        with pytest.raises(ConfigurationError) as exc_info:
+            validate_settings(self.StrictBoolSettings)
+
+        assert "flag" in exc_info.value.missing_fields
+
+    def test_numeric_one_as_true(self, clean_env: pytest.MonkeyPatch) -> None:
         """Should convert numeric 1 to True."""
         clean_env.setenv("FLAG", "1")
-        
+
         settings = validate_settings(self.StrictBoolSettings)
-        
+
         assert settings.flag is True
 
-    def test_numeric_zero_as_false(
-        self, clean_env: pytest.MonkeyPatch
-    ) -> None:
+    def test_numeric_zero_as_false(self, clean_env: pytest.MonkeyPatch) -> None:
         """Should convert numeric 0 to False."""
         clean_env.setenv("FLAG", "0")
-        
+
         settings = validate_settings(self.StrictBoolSettings)
-        
+
         assert settings.flag is False
 
 
@@ -429,16 +414,16 @@ class TestErrorMessageQuality:
         self, clean_env: pytest.MonkeyPatch
     ) -> None:
         """Error message should be helpful for missing required fields."""
-        
+
         class HelpfulSettings(BaseSettings):
             model_config = SettingsConfigDict(env_file=None)
             api_key: str = Field(..., description="API key for authentication")
-        
+
         with pytest.raises(ConfigurationError) as exc_info:
             validate_settings(HelpfulSettings)
-        
+
         message = str(exc_info.value)
-        
+
         # Should contain field name
         assert "API_KEY" in message
         # Should indicate it's missing
@@ -446,23 +431,21 @@ class TestErrorMessageQuality:
         # Should have helpful formatting
         assert "environment" in message.lower()
 
-    def test_type_error_shows_error_type(
-        self, clean_env: pytest.MonkeyPatch
-    ) -> None:
+    def test_type_error_shows_error_type(self, clean_env: pytest.MonkeyPatch) -> None:
         """Error message should show the error type for type mismatches."""
-        
+
         class TypeSettings(BaseSettings):
             model_config = SettingsConfigDict(env_file=None)
             count: int
-        
+
         clean_env.setenv("COUNT", "not-a-number")
-        
+
         with pytest.raises(ConfigurationError) as exc_info:
             validate_settings(TypeSettings)
-        
+
         error = exc_info.value
         message = str(error)
-        
+
         # Should show the error type
         assert "int_parsing" in message
         # Should show field name
@@ -472,11 +455,9 @@ class TestErrorMessageQuality:
 class TestRealWorldScenarios:
     """Tests simulating real-world configuration scenarios."""
 
-    def test_database_configuration(
-        self, clean_env: pytest.MonkeyPatch
-    ) -> None:
+    def test_database_configuration(self, clean_env: pytest.MonkeyPatch) -> None:
         """Should handle typical database configuration."""
-        
+
         class DatabaseSettings(BaseSettings):
             model_config = SettingsConfigDict(env_file=None)
             db_host: str = "localhost"
@@ -485,15 +466,15 @@ class TestRealWorldScenarios:
             db_user: str
             db_password: str
             db_ssl: bool = False
-        
+
         clean_env.setenv("DB_NAME", "myapp")
         clean_env.setenv("DB_USER", "dbuser")
         clean_env.setenv("DB_PASSWORD", "secret123")
         clean_env.setenv("DB_PORT", "3306")
         clean_env.setenv("DB_SSL", "true")
-        
+
         settings = validate_settings(DatabaseSettings)
-        
+
         assert settings.db_host == "localhost"
         assert settings.db_port == 3306
         assert settings.db_name == "myapp"
@@ -501,11 +482,9 @@ class TestRealWorldScenarios:
         assert settings.db_password == "secret123"
         assert settings.db_ssl is True
 
-    def test_api_configuration(
-        self, clean_env: pytest.MonkeyPatch
-    ) -> None:
+    def test_api_configuration(self, clean_env: pytest.MonkeyPatch) -> None:
         """Should handle typical API configuration."""
-        
+
         class ApiSettings(BaseSettings):
             model_config = SettingsConfigDict(env_file=None)
             api_url: str
@@ -513,55 +492,51 @@ class TestRealWorldScenarios:
             api_timeout: int = 30
             api_retries: int = 3
             api_version: str = "v1"
-        
+
         clean_env.setenv("API_URL", "https://api.example.com")
         clean_env.setenv("API_KEY", "sk_test_123456")
         clean_env.setenv("API_TIMEOUT", "60")
-        
+
         settings = validate_settings(ApiSettings)
-        
+
         assert settings.api_url == "https://api.example.com"
         assert settings.api_key == "sk_test_123456"
         assert settings.api_timeout == 60
         assert settings.api_retries == 3
         assert settings.api_version == "v1"
 
-    def test_logging_configuration(
-        self, clean_env: pytest.MonkeyPatch
-    ) -> None:
+    def test_logging_configuration(self, clean_env: pytest.MonkeyPatch) -> None:
         """Should handle typical logging configuration."""
-        
+
         class LoggingSettings(BaseSettings):
             model_config = SettingsConfigDict(env_file=None)
             log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
             log_format: str = "json"
             log_file: str = ""
-        
+
         clean_env.setenv("LOG_LEVEL", "DEBUG")
         clean_env.setenv("LOG_FILE", "/var/log/app.log")
-        
+
         settings = validate_settings(LoggingSettings)
-        
+
         assert settings.log_level == "DEBUG"
         assert settings.log_format == "json"
         assert settings.log_file == "/var/log/app.log"
 
-    def test_feature_flags_configuration(
-        self, clean_env: pytest.MonkeyPatch
-    ) -> None:
+    def test_feature_flags_configuration(self, clean_env: pytest.MonkeyPatch) -> None:
         """Should handle feature flags configuration."""
-        
+
         class FeatureFlagsSettings(BaseSettings):
             model_config = SettingsConfigDict(env_file=None)
             feature_new_ui: bool = False
             feature_beta_api: bool = False
             feature_analytics: bool = True
-        
+
         clean_env.setenv("FEATURE_NEW_UI", "true")
         clean_env.setenv("FEATURE_BETA_API", "1")
-        
+
         settings = validate_settings(FeatureFlagsSettings)
-        
+
         assert settings.feature_new_ui is True
         assert settings.feature_beta_api is True
         assert settings.feature_analytics is True
@@ -570,20 +545,20 @@ class TestRealWorldScenarios:
         self, clean_env: pytest.MonkeyPatch
     ) -> None:
         """Should fail gracefully when critical config is missing."""
-        
+
         class CriticalDbSettings(BaseSettings):
             model_config = SettingsConfigDict(env_file=None)
             database_url: str
             database_password: str
-        
+
         with pytest.raises(ConfigurationError) as exc_info:
             validate_settings(CriticalDbSettings)
-        
+
         error = exc_info.value
         assert len(error.missing_fields) == 2
         assert "database_url" in error.missing_fields
         assert "database_password" in error.missing_fields
-        
+
         # Error message should be clear
         message = str(error)
         assert "DATABASE_URL" in message

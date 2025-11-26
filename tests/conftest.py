@@ -64,6 +64,12 @@ def clean_env(monkeypatch: pytest.MonkeyPatch) -> pytest.MonkeyPatch:
         "DEBUG",
         "LOG_LEVEL",
         "HOST",
+        "SECRET_KEY",
+        "REDIS_URL",
+        "ENVIRONMENT",
+        "WORKERS",
+        "FLAG",
+        "APP_NAME",
     ]
     for var in env_vars:
         monkeypatch.delenv(var, raising=False)
