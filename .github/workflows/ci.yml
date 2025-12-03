@@ -5,6 +5,8 @@ on:
     branches:
       - main
       - develop
+      - 'release/*'
+      - 'hotfix/*'
   pull_request:
     branches:
       - main
@@ -14,8 +16,12 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v4
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
       - run: uv sync --dev
       - run: uv run ruff check src tests
       - run: uv run ruff format --check src tests
@@ -23,8 +29,12 @@ jobs:
   typecheck:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v4
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
       - run: uv sync --dev
       - run: uv run basedpyright src
 
@@ -34,10 +44,12 @@ jobs:
       matrix:
         python-version: ["3.11", "3.12", "3.13"]
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v4
+      - uses: actions/checkout@v6
         with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
           python-version: ${{ matrix.python-version }}
       - run: uv sync --dev
       - run: uv run pytest
-
