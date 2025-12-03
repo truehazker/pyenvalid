@@ -12,17 +12,19 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     database_url: str
     api_key: str
-    port: int
+    port: int = 8080
 
-settings = Settings()  # Crashes if DATABASE_URL not set
+settings = Settings()  # Raises ValidationError if DATABASE_URL or API_KEY not set
 ```
 
-```python
+```text
 pydantic_core._pydantic_core.ValidationError: 2 validation errors for Settings
 database_url
   Field required [type=missing, input_value={}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
 api_key
   Field required [type=missing, input_value={}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
 ```
 
 This error is confusing because:
@@ -30,23 +32,6 @@ This error is confusing because:
 - It doesn't mention environment variables in a friendly way
 - The `input_value={}` is misleading (it's not a dict, it's your environment)
 - Hard to quickly see which variables need to be set
-
-### Type errors
-
-If you have fields in your config that don't have a default value, you get a type error:
-
-```python
-from pydantic_settings import BaseSettings
-
-class Settings(BaseSettings):
-    database_url: str
-    api_key: str
-    port: int
-
-settings = Settings() # expects parameters to be passed in
-```
-
-This is not very good DX either.
 
 ## The Solution
 
@@ -151,4 +136,4 @@ The error type shown is the raw pydantic error type:
 
 ## License
 
-[MIT](LICENSE)
+[MIT](https://github.com/truehazker/pyenvalid/blob/main/LICENSE)
